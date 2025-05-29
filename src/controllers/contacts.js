@@ -13,11 +13,10 @@ import { parseFilterParams } from '../utils/parseFilterParams.js';
 export const getContactsController = async (req, res) => {
   const { page, perPage } = parsePaginationParams(req.query);
   const { sortBy, sortOrder } = parseSortParams(req.query);
-  const filter = {
-    ...parseFilterParams(req.query),
-    userId: req.user._id,
-  };
+  const filter = parseFilterParams(req.query);
+
   const contacts = await getAllContacts({
+    userId: req.user._id,
     page,
     perPage,
     sortBy,
@@ -35,7 +34,7 @@ export const getContactsController = async (req, res) => {
 export const getContactsByIdController = async (req, res) => {
   const { contactId } = req.params;
   const userId = req.user._id;
-  const contact = await getContactById(contactId, userId);
+  const contact = await getContactById({ contactId, userId });
 
   if (!contact) {
     throw createHttpError(404, 'Contact not found!');
