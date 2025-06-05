@@ -1,4 +1,5 @@
 import express from 'express';
+import path from 'node:path';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import pino from 'pino-http';
@@ -10,6 +11,7 @@ import { notFoundHandler } from './middlewares/notFoundHandler.js';
 const PORT = Number(getEnvVar('PORT', '3000'));
 export const setupServer = () => {
   const app = express();
+  app.use('/photos', express.static(path.resolve('src', 'uploads', 'photos')));
 
   app.use(express.json());
   app.use(cors());

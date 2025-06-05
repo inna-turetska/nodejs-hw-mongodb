@@ -13,6 +13,10 @@ const contactsSchema = new Schema(
     email: {
       type: String,
     },
+    photo: {
+      type: String,
+      required: false,
+    },
     isFavourite: {
       type: Boolean,
       default: false,

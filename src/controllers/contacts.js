@@ -1,3 +1,6 @@
+import * as fs from 'node:fs/promises';
+import path from 'node:path';
+
 import createHttpError from 'http-errors';
 import {
   getAllContacts,
@@ -9,6 +12,8 @@ import {
 import { parsePaginationParams } from '../utils/parsePaginationParams.js';
 import { parseSortParams } from '../utils/parseSortParams.js';
 import { parseFilterParams } from '../utils/parseFilterParams.js';
+import { getEnvVar } from '../utils/getEnvVar.js';
+import { saveFileToCloudinary } from '../utils/saveFileToCloudinary.js';
 
 export const getContactsController = async (req, res) => {
   const { page, perPage } = parsePaginationParams(req.query);
@@ -49,7 +54,21 @@ export const getContactsByIdController = async (req, res) => {
 
 export const createContactController = async (req, res) => {
   const userId = req.user._id;
-  const contact = await createContact({ ...req.body, userId });
+  let photo = null;
+
+  if (getEnvVar('UPLOAD_TO_CLOUDINARY') === 'true') {
+    const result = await saveFileToCloudinary(req.file.path);
+    await fs.unlink(req.file.path);
+
+    photo = result.secure_url;
+  } else {
+    await fs.rename(
+      req.file.path,
+      path.resolve('src', 'uploads', 'photos', req.file.filename),
+    );
+    photo = `http://localhost:3000/photos/${req.file.filename}`;
+  }
+  const contact = await createContact({ ...req.body, userId, photo });
 
   res.status(201).json({
     status: 201,
@@ -61,7 +80,26 @@ export const createContactController = async (req, res) => {
 export const patchContactController = async (req, res, next) => {
   const { contactId } = req.params;
   const userId = req.user._id;
-  const result = await patchContact(contactId, userId, req.body);
+  let photo = null;
+
+  if (getEnvVar('UPLOAD_TO_CLOUDINARY') === 'true') {
+    const result = await saveFileToCloudinary(req.file.path);
+    await fs.unlink(req.file.path);
+
+    photo = result.secure_url;
+  } else {
+    await fs.rename(
+      req.file.path,
+      path.resolve('src', 'uploads', 'photos', req.file.filename),
+    );
+    photo = `http://localhost:3000/photos/${req.file.filename}`;
+  }
+
+  const updateData = { ...req.body };
+  if (photo !== null) {
+    updateData.photo = photo;
+  }
+  const result = await patchContact(contactId, userId, updateData);
   if (!result) {
     next(createHttpError(404, 'Contact not found'));
     return;
