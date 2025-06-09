@@ -30,11 +30,6 @@ parameters:
       type: string
       enum: [asc, desc]
     description: Sort order
-  - in: query
-    name: filter
-    schema:
-      type: string
-    description: Filter criteria
 responses:
   '200':
     description: Successfully found contacts
